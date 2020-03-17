@@ -160,6 +160,8 @@ def PrintRoll(roll):
         raw_roll += ("-"+current_num)
     if raw_roll[0] == "+":
         raw_roll = raw_roll[1:]
+    if roll_result < 0:
+        roll_result = 0
     return raw_roll+" : "+str(roll_result)
 
 def PrintRolls(userin):
@@ -168,11 +170,15 @@ def PrintRolls(userin):
     if len(cleaned_input) == 0:
         return "Error: No Input Given"
     i = 0
+    total = 0
     while i < len(cleaned_input):
         roll = PrintRoll(cleaned_input[i])
         if len(roll) == 0:
             return "Error: Roll Number " + str(i+1) + " Improperly Formatted"
         rolls += roll + "\n"
+        total += int(roll.split(":")[1].replace(" ",""))
+        i += 1
+    rolls += "Total: "+str(total)
     return rolls
 
 @bot.event
@@ -402,7 +408,7 @@ async def search(ctx, *args):
 
 @bot.command(pass_context=True)
 async def roll(ctx, *args):
-        rolls = PrintRolls(args)
+        rolls = PrintRolls("".join(args))
         await bot.say(rolls)
 
 bot.run(*TOKEN*)
