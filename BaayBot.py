@@ -56,17 +56,13 @@ def PrintPageD(URL):
         table = table.replace('\n', ' ')
 
         desc = soup.findAll('p')
-
         descp = ''
-        
         for para in desc:
                 para = para.text.strip()
                 if para.__contains__("Hypertext"):
                         break
                 descp += '\n' + para + '\n'
-
         total = title + '\n' + stitle + '\n' + table + '\n' + descp
-
         return total
 
 
