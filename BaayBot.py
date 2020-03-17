@@ -65,7 +65,115 @@ def PrintPageD(URL):
         total = title + '\n' + stitle + '\n' + table + '\n' + descp
         return total
 
+def PrintRoll(roll):
+    i = 0
+    prev_sep = "+"
+    current_num = ""
+    roll_result = 0
+    dice_num = 1
+    raw_roll = ""
+    if len(roll) != 0:
+        if roll[0] == 'd' or roll[0] == '+' or roll[0] == '-':
+            prev_sep = roll[0]
+            if prev_sep == "d":
+                prev_sep = "+d" 
+            i=1
+        elif not roll[0].isnumeric():
+            return ""
+    else:
+        return ""
+    if not roll[-1].isnumeric():
+        return ""
+    while i < len(roll):
+        if roll[i].isnumeric():
+            current_num += roll[i]
+        else:
+            if len(current_num) == 0 and (roll[i] != "d"  or "d" in prev_sep):
+                return ""
+    
+            if roll[i] == "d":
+                if "d" in prev_sep:
+                    return ""
+                if len(current_num) > 0:
+                    dice_num = int(current_num)
+                    current_num = ""
+                if dice_num == 0:
+                    return ""
+                prev_sep += "d"
 
+            elif roll[i] == "+" or roll[i] == "-":
+                if len(current_num) == 0:
+                    return ""
+                if "+d" == prev_sep:
+                    if (int(current_num) == 0):
+                        return ""
+                    k = 0
+                    while k < dice_num:
+                        val = random.randint(1,int(current_num))
+                        roll_result += val
+                        raw_roll += ("+"+str(val))
+                        k+=1
+                    current_num = ""
+                    dice_num = 1
+                elif "-d" == prev_sep:
+                    if (int(current_num) == 0):
+                        return ""
+                    k = 0
+                    while k < dice_num:
+                        val = random.randint(1,int(current_num))
+                        roll_result -= val
+                        raw_roll += ("-"+str(roll_result))
+                        k+=1
+                    current_num = ""
+                    dice_num = 1                    
+                elif "+" == prev_sep:
+                    roll_result += int(current_num)
+                    raw_roll += ("+"+current_num)
+                    current_num = ""
+                elif "-" == prev_sep:
+                    roll_result -= int(current_num)
+                    raw_roll += ("-"+current_num)
+                    current_num = ""
+                prev_sep = roll[i]
+            else:
+                return ""
+        i+=1
+    if "+d" == prev_sep:
+        k = 0
+        while k < dice_num:
+            val = random.randint(1,int(current_num))
+            roll_result += val
+            raw_roll += ("+"+str(roll_result))
+            k+=1
+    elif "-d" == prev_sep:
+        k = 0
+        while k < dice_num:
+            val = random.randint(1,int(current_num))
+            roll_result -= val
+            raw_roll += ("-"+str(roll_result))      
+            k+=1        
+    elif "+" == prev_sep:
+        roll_result += int(current_num)
+        raw_roll += ("+"+current_num)
+    elif "-" == prev_sep:
+        roll_result -= int(current_num)
+        raw_roll += ("-"+current_num)
+    if raw_roll[0] == "+":
+        raw_roll = raw_roll[1:]
+    return raw_roll+" : "+str(roll_result)
+
+def PrintRolls(userin):
+    rolls = ""
+    cleaned_input = userin.replace(" ","").lower().split(",")
+    if len(cleaned_input) == 0:
+        return "Error: No Input Given"
+    i = 0
+    while i < len(cleaned_input):
+        roll = PrintRoll(cleaned_input[i])
+        if len(roll) == 0:
+            return "Error: Roll Number " + str(i+1) + " Improperly Formatted"
+        rolls += roll + "\n"
+    return rolls
 
 @bot.event
 async def on_ready():
@@ -247,16 +355,10 @@ async def clear(ctx):
 
 @bot.command(pass_context=True)
 async def search(ctx, *args):
-
-
         URLend = '-'.join(args)
-
         URL = "http://therafimrpg.wikidot.com/" + URLend
-
         # Plug the search term directly into therafim's URL format
-
         try:
-
                 page = urllib.request.urlopen(URL)
                 soup = BeautifulSoup(page, "html.parser")
 
@@ -267,61 +369,40 @@ async def search(ctx, *args):
                 contentp = content.text.strip()
 
                 total = titlep + "\n" + contentp
-                total = total[:2000] + (total[2000:] and '..')
-                
+                total = total[:2000] + (total[2000:] and '..')    
                 await bot.say(total)
-
                 return
-    
-        except OSError:
-
-                # If that's not a valid page, we will attempt another site via google search
-                
+        except OSError: # If that's not a valid page, we will attempt another site via google search
                 await bot.say('Starting search...')
-
         except:
-
                 await bot.say('Well I tried but its all fucked bro')
-                
 
         class AppURLopener(urllib.request.FancyURLopener):
                 version = "Mozilla/5.0"
-
         try: 
                 from googlesearch import search 
-
         except ImportError:  
                 print("No module named 'google' found")
-
         indic = False
-
         query = " ".join(args)
-
         for k in range(2):
-            
             for j in search(query, num=10, stop=1, pause=2): 
                 if j.__contains__("dnd.arkalseif.info"):
-
                     indic = True
-                    
                     await bot.say(PrintPageArk(j))
-
                     break
-                    
                 if j.__contains__("d20srd.org"):
                     print(j)
                     indic = True
-
                     await bot.say(PrintPageD(j))
-                    
                     break
-
             if indic == True:
                 break
-            
             query = URLend + " dnd 3.5"
 
+@bot.command(pass_context=True)
+async def roll(ctx, *args):
+        rolls = PrintRolls(args)
+        await bot.say(rolls)
 
-
-    
 bot.run(*TOKEN*)
