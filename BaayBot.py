@@ -145,14 +145,14 @@ def PrintRoll(roll):
         while k < dice_num:
             val = random.randint(1,int(current_num))
             roll_result += val
-            raw_roll += ("+"+str(roll_result))
+            raw_roll += ("+"+str(val))
             k+=1
     elif "-d" == prev_sep:
         k = 0
         while k < dice_num:
             val = random.randint(1,int(current_num))
             roll_result -= val
-            raw_roll += ("-"+str(roll_result))      
+            raw_roll += ("-"+str(val))      
             k+=1        
     elif "+" == prev_sep:
         roll_result += int(current_num)
