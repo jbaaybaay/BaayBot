@@ -1,11 +1,13 @@
+import os
 import discord
 from discord.ext import commands
-from discord.ext.commands import Bot
+from dotenv import load_dotenv
 import asyncio
 import random
 import re
 import urllib.request
 from bs4 import BeautifulSoup
+
 
 EncounterSwitch = False
 NumGrant = 2
@@ -189,7 +191,7 @@ async def on_ready():
 async def cru(ctx):
         global EncounterSwitch
         if EncounterSwitch == True:
-                await bot.say("Already in a current encounter")
+                await ctx.send("Already in a current encounter")
                 return
 
         global CrUser
@@ -198,7 +200,7 @@ async def cru(ctx):
 
         EncounterSwitch = True
         output = "Welcome to Baay Crusader Logic {0.author.mention} \nUse the functions $turn, $use, and $rec to proceed and don't forget to $clear after the encounter.  Only one can use!".format(ctx.message)
-        await bot.say(output)
+        await ctx.send(output)
         i = 0
         global NumGrant
         global Ungranted
@@ -209,11 +211,11 @@ async def cru(ctx):
             Granted.append(Ungranted[which])
             Ungranted.pop(which)
             i += 1
-            await bot.say(str(Granted[len(Granted)-1] + " Granted"))
+            await ctx.send(str(Granted[len(Granted)-1] + " Granted"))
 
 @bot.command(pass_context=True)
 async def rip(ctx):
-        await bot.say(":dean:")
+        await ctx.send(":dean:")
 
 ##@bot.command(pass_context=True)
 ##async def roll(ctx, *args):
@@ -223,7 +225,7 @@ async def rip(ctx):
 ##                roll[i] = random.randint(1, int(die[1]))
 ##                total += roll[i]
 ##
-##        await bot.say(roll)
+##        await ctx.send(roll)
 
 
 @bot.command(pass_context=True)
@@ -232,7 +234,7 @@ async def man(ctx):
         global EncounterSwitch
         
         if EncounterSwitch == False:
-                await bot.say("Not in an encounter currently")
+                await ctx.send("Not in an encounter currently")
                 return
         
         global Ungranted
@@ -250,7 +252,7 @@ async def man(ctx):
                 i += 1
                 output += str(i) + ". " + str(Expended[i-1]) + "\n"
 
-        await bot.say(output)
+        await ctx.send(output)
 
 @bot.command(pass_context=True)
 async def turn(ctx):
@@ -258,7 +260,7 @@ async def turn(ctx):
         global EncounterSwitch
         
         if EncounterSwitch == False:
-                await bot.say("Not in an encounter currently")
+                await ctx.send("Not in an encounter currently")
                 return
         
         global CrUser
@@ -266,14 +268,14 @@ async def turn(ctx):
         global Granted
 
         if CrUser != ctx.message.author:
-                await bot.say("Crusader Denied")
+                await ctx.send("Crusader Denied")
                 return
         
         if len(Ungranted) > 0:
                 which = random.randint(0, (len(Ungranted)-1))
                 Granted.append(Ungranted[which])
                 Ungranted.pop(which)
-                await bot.say(str(Granted[len(Granted)-1] + " Granted"))
+                await ctx.send(str(Granted[len(Granted)-1] + " Granted"))
 
 @bot.command(pass_context=True)
 async def use(ctx, select:int):
@@ -281,7 +283,7 @@ async def use(ctx, select:int):
         global EncounterSwitch
         
         if EncounterSwitch == False:
-                await bot.say("Not in an encounter currently")
+                await ctx.send("Not in an encounter currently")
                 return
         
         global Granted
@@ -289,12 +291,12 @@ async def use(ctx, select:int):
         global CrUser
 
         if CrUser != ctx.message.author:
-                await bot.say("Crusader Denied")
+                await ctx.send("Crusader Denied")
                 return
         
         if select <= len(Granted) and select > 0:
                 x = select - 1
-                await bot.say("Used " + Granted[x])
+                await ctx.send("Used " + Granted[x])
                 Expended.append(Granted[x])
                 Granted.pop(x)
 
@@ -305,18 +307,18 @@ async def rec(ctx):
         global EncounterSwitch
         
         if EncounterSwitch == False:
-                await bot.say("Not in an encounter currently")
+                await ctx.send("Not in an encounter currently")
                 return
         
         global CrUser
 
         if CrUser != ctx.message.author:
-                await bot.say("Crusader Denied")
+                await ctx.send("Crusader Denied")
                 return
         
         global Granted
         global Expended
-        await bot.say("Granted Maneuvers Recovered")
+        await ctx.send("Granted Maneuvers Recovered")
         Granted.extend(Expended)
         Expended.clear()
 
@@ -326,13 +328,13 @@ async def clear(ctx):
         global EncounterSwitch
         
         if EncounterSwitch == False:
-                await bot.say("Not in an encounter currently")
+                await ctx.send("Not in an encounter currently")
                 return
 
         global CrUser
 
         if CrUser != ctx.message.author:
-                await bot.say("Crusader Denied")
+                await ctx.send("Crusader Denied")
                 return
         
         global Granted
@@ -376,12 +378,12 @@ async def search(ctx, *args):
 
                 total = titlep + "\n" + contentp
                 total = total[:2000] + (total[2000:] and '..')    
-                await bot.say(total)
+                await ctx.send(total)
                 return
         except OSError: # If that's not a valid page, we will attempt another site via google search
-                await bot.say('Starting search...')
+                await ctx.send('Starting search...')
         except:
-                await bot.say('Well I tried but its all fucked bro')
+                await ctx.send('Well I tried but its all fucked bro')
 
         class AppURLopener(urllib.request.FancyURLopener):
                 version = "Mozilla/5.0"
@@ -395,12 +397,12 @@ async def search(ctx, *args):
             for j in search(query, num=10, stop=1, pause=2): 
                 if j.__contains__("dnd.arkalseif.info"):
                     indic = True
-                    await bot.say(PrintPageArk(j))
+                    await ctx.send(PrintPageArk(j))
                     break
                 if j.__contains__("d20srd.org"):
                     print(j)
                     indic = True
-                    await bot.say(PrintPageD(j))
+                    await ctx.send(PrintPageD(j))
                     break
             if indic == True:
                 break
@@ -409,6 +411,6 @@ async def search(ctx, *args):
 @bot.command(pass_context=True)
 async def roll(ctx, *args):
         rolls = PrintRolls("".join(args))
-        await bot.say(rolls)
+        await ctx.send(rolls)
 
 bot.run(*TOKEN*)
