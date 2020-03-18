@@ -22,3 +22,6 @@ $use int
 
 $clear
 	- exit encounter
+
+$rip
+	- rip the boi
