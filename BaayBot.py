@@ -410,7 +410,9 @@ async def search(ctx, *args):
 
 @bot.command(pass_context=True)
 async def roll(ctx, *args):
+        username = ctx.message.author.mention
         rolls = PrintRolls("".join(args))
-        await ctx.send(rolls)
+        user_rolls = "@"+username+"\n"+rolls
+        await ctx.send(user_rolls) #Haven't tested this yet
 
 bot.run(*TOKEN*)
