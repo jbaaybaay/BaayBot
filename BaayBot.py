@@ -6,6 +6,7 @@ import asyncio
 import random
 import re
 import urllib.request
+import json
 from bs4 import BeautifulSoup
 
 
@@ -164,7 +165,7 @@ def PrintRoll(roll):
         raw_roll = raw_roll[1:]
     if roll_result < 0:
         roll_result = 0
-    return raw_roll+" : "+str(roll_result)
+    return raw_roll+": "+str(roll_result)
 
 def PrintRolls(userin):
     rolls = ""
@@ -180,12 +181,15 @@ def PrintRolls(userin):
         rolls += roll + "\n"
         total += int(roll.split(":")[1].replace(" ",""))
         i += 1
-    rolls += "Total: "+str(total)
-    return rolls
+    return rolls, total
 
 @bot.event
 async def on_ready():
 	print ("Baaybot Active")
+
+#@bot.command(pass_context=True)
+#async def usercheck(ctx):
+        
 
 @bot.command(pass_context=True)
 async def cru(ctx):
@@ -411,8 +415,8 @@ async def search(ctx, *args):
 @bot.command(pass_context=True)
 async def roll(ctx, *args):
         username = ctx.message.author.mention
-        rolls = PrintRolls("".join(args))
-        user_rolls = "@"+username+"\n"+rolls
+        rolls, total = PrintRolls("".join(args))
+        user_rolls = rolls+username+" rolled a "+str(total)+"."
         await ctx.send(user_rolls) #Haven't tested this yet
 
 bot.run(*TOKEN*)
