@@ -12,23 +12,21 @@ import gspread
 
 ###########################INITIALIZATION VARIABLES###########################
 # Initialize Google Sheets Service Account
-gc = gspread.service_account(filename='GoogleServiceAccount/Baaybot.json')
+gc = gspread.service_account(filename='Tokens/GoogleService.json')
 
 # Designate Command Prefix
 bot = commands.Bot(command_prefix='$')
 
 # Discord Bot Token
-Discord_Token = *TOKEN*
+Discord_TokenFile = open('Tokens/DiscordToken.txt', 'r')
+Discord_Token = Discord_TokenFile.read()
 
 # Userdata Sheet ID
-UserDataSheetLink = *USERDATASHEETLINK*
+UserDataSheetLinkFile = open('Tokens/UserdataSheet.txt', 'r')
+UserDataSheetLink = UserDataSheetLinkFile.read()
 #############################################################################
 
-EncounterSwitch = False
-NumGrant = 2
-Ungranted = ['Leading The Attack', 'Charging Minotaur', 'White Raven Tactics', 'Revitalizing Strike', 'Defensive Rebuke']
-Granted = []
-Expended = []
+ID_list, Username_list, Sheet_list = [], [], []
 ActiveUsers = []
 # Keeps track of who's here for party rolls
 
@@ -197,49 +195,43 @@ def PrintRolls(userin):
         i += 1
     return rolls, total
 
-# Take in int userID, output Sheet Link string
-def FindUserSheet(userID):
-    
-    UserDataSheet = gc.open_by_key(UserDataSheetLink)
-    UserDataWorksheet = UserDataSheet.worksheet("UserData")
-
-    ID_list = UserDataWorksheet.col_values(1)
-    CallerID = str(userID)
-    
-    row = 1
-    for i in ID_list:
-        if i == CallerID:
-            SheetCell = 'C'+str(row)
-            SheetLink = UserDataWorksheet.get(SheetCell).first()
-            return SheetLink
-        else:
-            row += 1
-            
-    return
-
 # Take in int userID, string cell value (e.g. 'B1'), output CellValue string
 def FindCellValue(userID, cell):
+        global ID_list, Sheet_list
+        CallerID = str(userID)
 
-    try:
-
-        SheetLink = FindUserSheet(userID)
-    
-        CharacterSheet = gc.open_by_url(SheetLink)
-        CharacterWorksheet = CharacterSheet.get_worksheet(0)
+        item = 0
+        for i in ID_list:
+                if i == CallerID:
+                        SheetLink = Sheet_list[item]
+                        break
+                else:
+                    item += 1
+        try:
+                CharacterSheet = gc.open_by_url(SheetLink)
+                CharacterWorksheet = CharacterSheet.get_worksheet(0)
+        except:
+                return ("Error: User Sheet Not Initialized Correctly")
 
         CellValue = CharacterWorksheet.get(cell).first()
         return CellValue
 
-    except:
-        return ("Error: User Sheet Not Initialized Correctly")
-
+def RefreshUserData():
+        global ID_list, Username_list, Sheet_list
         
-    
+        UserDataSheet = gc.open_by_key(UserDataSheetLink)
+        UserDataWorksheet = UserDataSheet.worksheet("UserData")
+
+        ID_list = UserDataWorksheet.col_values(1)
+        Username_list = UserDataWorksheet.col_values(2)
+        Sheet_list = UserDataWorksheet.col_values(3)
+        return
     
 
 @bot.event
 async def on_ready():
-	print ("Baaybot Active")
+        RefreshUserData()
+        print("Baaybot Active")
 
 @bot.command(pass_context=True)
 async def here(ctx, *args):
@@ -253,7 +245,7 @@ async def here(ctx, *args):
             user = ctx.message.author
         if user.id not in ActiveUsers:
                 ActiveUsers.append(user.id)
-        await ctx.send(ActiveUsers)
+        return
 
 @bot.command(pass_context=True)
 async def nothere(ctx, *args):
@@ -267,13 +259,13 @@ async def nothere(ctx, *args):
             user = ctx.message.author
         if user.id in ActiveUsers:
                 ActiveUsers.remove(user.id)
-        await ctx.send(ActiveUsers)
+        return
 
 @bot.command(pass_context=True)
 async def clearhere(ctx):
         global ActiveUsers
         ActiveUsers = []
-        await ctx.send(ActiveUsers)
+        return
 
 @bot.command(pass_context=True)
 async def rollcall(ctx):
@@ -311,6 +303,7 @@ async def mysheet(ctx, *args):
                     UserDataWorksheet.update(UsernameCell, ctx.message.author.name)
                     SheetlinkCell = 'C'+str(row)
                     UserDataWorksheet.update(SheetlinkCell, args[0])
+                    RefreshUserData()
                     await ctx.send("Sheet Row Updated")
                     return
                 else:
@@ -323,6 +316,7 @@ async def mysheet(ctx, *args):
             UserDataWorksheet.update(UsernameCell, ctx.message.author.name)
             SheetlinkCell = 'C'+str(row)
             UserDataWorksheet.update(SheetlinkCell, args[0])
+            RefreshUserData()
             await ctx.send("New Row Created")
             return
 
@@ -333,153 +327,8 @@ async def mysheet(ctx, *args):
             return
 
 @bot.command(pass_context=True)
-async def cru(ctx):
-        global EncounterSwitch
-        if EncounterSwitch == True:
-                await ctx.send("Already in a current encounter")
-                return
-
-        global CrUser
-
-        CrUser = ctx.message.author
-
-        EncounterSwitch = True
-        output = "Welcome to Baay Crusader Logic {0.author.mention} \nUse the functions $turn, $use, and $rec to proceed and don't forget to $clear after the encounter.  Only one can use!".format(ctx.message)
-        await ctx.send(output)
-        i = 0
-        global NumGrant
-        global Ungranted
-        global Granted
-        global Expended
-        while i < NumGrant:
-            which = random.randint(0, (len(Ungranted)-1))
-            Granted.append(Ungranted[which])
-            Ungranted.pop(which)
-            i += 1
-            await ctx.send(str(Granted[len(Granted)-1] + " Granted"))
-
-@bot.command(pass_context=True)
 async def rip(ctx):
         await ctx.send(":dean:")
-
-
-@bot.command(pass_context=True)
-async def man(ctx):
-
-        global EncounterSwitch
-        
-        if EncounterSwitch == False:
-                await ctx.send("Not in an encounter currently")
-                return
-        
-        global Ungranted
-        global Granted
-        global Expended
-        output = "Maneuvers Granted: \n"
-        i = 0
-        while i < len(Granted):
-                i += 1
-                output += str(i) + ". " + str(Granted[i-1]) + "\n"
-
-        output += ("Maneuvers Expended: \n")
-        i = 0
-        while i < len(Expended):
-                i += 1
-                output += str(i) + ". " + str(Expended[i-1]) + "\n"
-
-        await ctx.send(output)
-
-@bot.command(pass_context=True)
-async def turn(ctx):
-
-        global EncounterSwitch
-        
-        if EncounterSwitch == False:
-                await ctx.send("Not in an encounter currently")
-                return
-        
-        global CrUser
-        global Ungranted
-        global Granted
-
-        if CrUser != ctx.message.author:
-                await ctx.send("Crusader Denied")
-                return
-        
-        if len(Ungranted) > 0:
-                which = random.randint(0, (len(Ungranted)-1))
-                Granted.append(Ungranted[which])
-                Ungranted.pop(which)
-                await ctx.send(str(Granted[len(Granted)-1] + " Granted"))
-
-@bot.command(pass_context=True)
-async def use(ctx, select:int):
-
-        global EncounterSwitch
-        
-        if EncounterSwitch == False:
-                await ctx.send("Not in an encounter currently")
-                return
-        
-        global Granted
-        global Expended
-        global CrUser
-
-        if CrUser != ctx.message.author:
-                await ctx.send("Crusader Denied")
-                return
-        
-        if select <= len(Granted) and select > 0:
-                x = select - 1
-                await ctx.send("Used " + Granted[x])
-                Expended.append(Granted[x])
-                Granted.pop(x)
-
-
-@bot.command(pass_context=True)
-async def rec(ctx):
-
-        global EncounterSwitch
-        
-        if EncounterSwitch == False:
-                await ctx.send("Not in an encounter currently")
-                return
-        
-        global CrUser
-
-        if CrUser != ctx.message.author:
-                await ctx.send("Crusader Denied")
-                return
-        
-        global Granted
-        global Expended
-        await ctx.send("Granted Maneuvers Recovered")
-        Granted.extend(Expended)
-        Expended.clear()
-
-@bot.command(pass_context=True)
-async def clear(ctx):
-
-        global EncounterSwitch
-        
-        if EncounterSwitch == False:
-                await ctx.send("Not in an encounter currently")
-                return
-
-        global CrUser
-
-        if CrUser != ctx.message.author:
-                await ctx.send("Crusader Denied")
-                return
-        
-        global Granted
-        global Expended
-        global Ungranted
-
-        Ungranted = ['Leading The Attack', 'Charging Minotaur', 'White Raven Tactics', 'Revitalizing Strike', 'Defensive Rebuke']
-        Granted = []
-        Expended = []
-        EncounterSwitch = False
 
 # Haven't successfully implemented voice features yet
 
@@ -558,6 +407,26 @@ async def spot(ctx):
             return
         rolls, total = PrintRolls("1d20+"+SpotMod)
         user_rolls = rolls+ctx.message.author.mention+" rolled a **"+str(total)+"** on **Spot**."
+        await ctx.send(user_rolls)
+
+@bot.command(pass_context=True)
+async def listen(ctx):
+        ListenMod = FindCellValue(ctx.message.author.id, "C68")
+        if ListenMod == "Error: User Sheet Not Initialized Correctly":
+            await ctx.send(ListenMod)
+            return
+        rolls, total = PrintRolls("1d20+"+ListenMod)
+        user_rolls = rolls+ctx.message.author.mention+" rolled a **"+str(total)+"** on **Listen**."
+        await ctx.send(user_rolls)
+
+@bot.command(pass_context=True)
+async def init(ctx):
+        InitMod = FindCellValue(ctx.message.author.id, "C25")
+        if InitMod == "Error: User Sheet Not Initialized Correctly":
+            await ctx.send(InitMod)
+            return
+        rolls, total = PrintRolls("1d20+"+InitMod)
+        user_rolls = rolls+ctx.message.author.mention+" rolled a **"+str(total)+"** on **Initiative**."
         await ctx.send(user_rolls)
 
 bot.run(Discord_Token)
