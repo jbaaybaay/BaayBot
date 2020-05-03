@@ -396,7 +396,7 @@ async def search(ctx, *args):
 async def roll(ctx, *args):
         username = ctx.message.author.mention
         rolls, total = PrintRolls("".join(args))
-        user_rolls = rolls+username+" rolled a **"+str(total)+"**."
+        user_rolls = rolls+username+" rolled: **"+str(total)+"**."
         await ctx.send(user_rolls)
 
 @bot.command(pass_context=True)
@@ -406,7 +406,7 @@ async def spot(ctx):
             await ctx.send(SpotMod)
             return
         rolls, total = PrintRolls("1d20+"+SpotMod)
-        user_rolls = rolls+ctx.message.author.mention+" rolled a **"+str(total)+"** on **Spot**."
+        user_rolls = rolls+ctx.message.author.mention+" rolled: **"+str(total)+"** on **Spot**."
         await ctx.send(user_rolls)
 
 @bot.command(pass_context=True)
@@ -416,7 +416,7 @@ async def listen(ctx):
             await ctx.send(ListenMod)
             return
         rolls, total = PrintRolls("1d20+"+ListenMod)
-        user_rolls = rolls+ctx.message.author.mention+" rolled a **"+str(total)+"** on **Listen**."
+        user_rolls = rolls+ctx.message.author.mention+" rolled: **"+str(total)+"** on **Listen**."
         await ctx.send(user_rolls)
 
 @bot.command(pass_context=True)
@@ -426,7 +426,7 @@ async def init(ctx):
             await ctx.send(InitMod)
             return
         rolls, total = PrintRolls("1d20+"+InitMod)
-        user_rolls = rolls+ctx.message.author.mention+" rolled a **"+str(total)+"** on **Initiative**."
+        user_rolls = rolls+ctx.message.author.mention+" rolled: **"+str(total)+"** on **Initiative**."
         await ctx.send(user_rolls)
 
 bot.run(Discord_Token)
