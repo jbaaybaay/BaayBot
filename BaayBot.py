@@ -8,15 +8,29 @@ import re
 import urllib.request
 import json
 from bs4 import BeautifulSoup
+import gspread
 
+###########################INITIALIZATION VARIABLES###########################
+# Initialize Google Sheets Service Account
+gc = gspread.service_account(filename='GoogleServiceAccount/Baaybot.json')
+
+# Designate Command Prefix
+bot = commands.Bot(command_prefix='$')
+
+# Discord Bot Token
+Discord_Token = *TOKEN*
+
+# Userdata Sheet ID
+UserDataSheetLink = *USERDATASHEETLINK*
+#############################################################################
 
 EncounterSwitch = False
 NumGrant = 2
 Ungranted = ['Leading The Attack', 'Charging Minotaur', 'White Raven Tactics', 'Revitalizing Strike', 'Defensive Rebuke']
 Granted = []
 Expended = []
-
-bot = commands.Bot(command_prefix='$')
+ActiveUsers = []
+# Keeps track of who's here for party rolls
 
 class AppURLopener(urllib.request.FancyURLopener):
         version = "Mozilla/5.0"
@@ -183,13 +197,140 @@ def PrintRolls(userin):
         i += 1
     return rolls, total
 
+# Take in int userID, output Sheet Link string
+def FindUserSheet(userID):
+    
+    UserDataSheet = gc.open_by_key(UserDataSheetLink)
+    UserDataWorksheet = UserDataSheet.worksheet("UserData")
+
+    ID_list = UserDataWorksheet.col_values(1)
+    CallerID = str(userID)
+    
+    row = 1
+    for i in ID_list:
+        if i == CallerID:
+            SheetCell = 'C'+str(row)
+            SheetLink = UserDataWorksheet.get(SheetCell).first()
+            return SheetLink
+        else:
+            row += 1
+            
+    return
+
+# Take in int userID, string cell value (e.g. 'B1'), output CellValue string
+def FindCellValue(userID, cell):
+
+    try:
+
+        SheetLink = FindUserSheet(userID)
+    
+        CharacterSheet = gc.open_by_url(SheetLink)
+        CharacterWorksheet = CharacterSheet.get_worksheet(0)
+
+        CellValue = CharacterWorksheet.get(cell).first()
+        return CellValue
+
+    except:
+        return ("Error: User Sheet Not Initialized Correctly")
+
+        
+    
+    
+
 @bot.event
 async def on_ready():
 	print ("Baaybot Active")
 
-#@bot.command(pass_context=True)
-#async def usercheck(ctx):
-        
+@bot.command(pass_context=True)
+async def here(ctx, *args):
+        global ActiveUsers
+        if args:
+                if ctx.message.mentions:
+                        user = ctx.message.mentions[0]
+                else:
+                        await ctx.send("Invalid User Specified")
+        else:
+            user = ctx.message.author
+        if user.id not in ActiveUsers:
+                ActiveUsers.append(user.id)
+        await ctx.send(ActiveUsers)
+
+@bot.command(pass_context=True)
+async def nothere(ctx, *args):
+        global ActiveUsers
+        if args:
+                if ctx.message.mentions:
+                        user = ctx.message.mentions[0]
+                else:
+                        await ctx.send("Invalid User Specified")
+        else:
+            user = ctx.message.author
+        if user.id in ActiveUsers:
+                ActiveUsers.remove(user.id)
+        await ctx.send(ActiveUsers)
+
+@bot.command(pass_context=True)
+async def clearhere(ctx):
+        global ActiveUsers
+        ActiveUsers = []
+        await ctx.send(ActiveUsers)
+
+@bot.command(pass_context=True)
+async def rollcall(ctx):
+        rollcall = "ROLLCALL\n"
+        global ActiveUsers
+        if ActiveUsers:
+            for i in ActiveUsers:
+                user = bot.get_user(i)
+                rollcall += user.mention+" is here!\n"
+        else:
+            rollcall += "no one is here :("
+        await ctx.send(rollcall)
+
+
+@bot.command(pass_context=True)
+async def mysheet(ctx, *args):
+    try:
+            CharacterSheet = gc.open_by_url(args[0])
+            CharacterWorksheet = CharacterSheet.get_worksheet(0)
+            ValCheck = CharacterWorksheet.cell(1, 1).value
+            if ValCheck != "Name":
+                await ctx.send("Incorrect Sheet: Please make sure your character sheet is the first worksheet")
+                return
+            
+            UserDataSheet = gc.open_by_key(UserDataSheetLink)
+            UserDataWorksheet = UserDataSheet.worksheet("UserData")
+
+            ID_list = UserDataWorksheet.col_values(1)
+            CallerID = str(ctx.message.author.id)
+            row = 1
+            for i in ID_list:
+                if i == CallerID:
+                    # Update Row with new sheet
+                    UsernameCell = 'B'+str(row)
+                    UserDataWorksheet.update(UsernameCell, ctx.message.author.name)
+                    SheetlinkCell = 'C'+str(row)
+                    UserDataWorksheet.update(SheetlinkCell, args[0])
+                    await ctx.send("Sheet Row Updated")
+                    return
+                else:
+                    row += 1
+
+            # Create New Row
+            IDCell = 'A'+str(row)
+            UserDataWorksheet.update(IDCell, str(ctx.message.author.id))
+            UsernameCell = 'B'+str(row)
+            UserDataWorksheet.update(UsernameCell, ctx.message.author.name)
+            SheetlinkCell = 'C'+str(row)
+            UserDataWorksheet.update(SheetlinkCell, args[0])
+            await ctx.send("New Row Created")
+            return
+
+            await ctx.send(row)
+
+    except:
+            await ctx.send("Error: Permission or URL Error")
+            return
 
 @bot.command(pass_context=True)
 async def cru(ctx):
@@ -220,16 +361,6 @@ async def cru(ctx):
 @bot.command(pass_context=True)
 async def rip(ctx):
         await ctx.send(":dean:")
-
-##@bot.command(pass_context=True)
-##async def roll(ctx, *args):
-##        #assume xdy
-##        die = args[0].split("d")
-##        for i in range(int(die[0])):
-##                roll[i] = random.randint(1, int(die[1]))
-##                total += roll[i]
-##
-##        await ctx.send(roll)
 
 
 @bot.command(pass_context=True)
@@ -416,7 +547,17 @@ async def search(ctx, *args):
 async def roll(ctx, *args):
         username = ctx.message.author.mention
         rolls, total = PrintRolls("".join(args))
-        user_rolls = rolls+username+" rolled a "+str(total)+"."
-        await ctx.send(user_rolls) #Haven't tested this yet
+        user_rolls = rolls+username+" rolled a **"+str(total)+"**."
+        await ctx.send(user_rolls)
 
-bot.run(*TOKEN*)
+@bot.command(pass_context=True)
+async def spot(ctx):
+        SpotMod = FindCellValue(ctx.message.author.id, "C78")
+        if SpotMod == "Error: User Sheet Not Initialized Correctly":
+            await ctx.send(SpotMod)
+            return
+        rolls, total = PrintRolls("1d20+"+SpotMod)
+        user_rolls = rolls+ctx.message.author.mention+" rolled a **"+str(total)+"** on **Spot**."
+        await ctx.send(user_rolls)
+
+bot.run(Discord_Token)
