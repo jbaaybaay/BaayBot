@@ -3,12 +3,13 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 import asyncio
-import random
 import re
 import urllib.request
 import json
 from bs4 import BeautifulSoup
 import gspread
+from DiceRoll import *
+from WebParser import *
 
 ###########################INITIALIZATION VARIABLES###########################
 # Initialize Google Sheets Service Account
@@ -29,171 +30,6 @@ UserDataSheetLink = UserDataSheetLinkFile.read()
 ID_list, Username_list, Sheet_list = [], [], []
 ActiveUsers = []
 # Keeps track of who's here for party rolls
-
-class AppURLopener(urllib.request.FancyURLopener):
-        version = "Mozilla/5.0"
-
-# Both these sources have different HTML formats so i need to parse them differently
-# Ark throws everything into one HTML section while d20 just puts it in all different places
-# Both are nightmares, I like therafim better
-
-def PrintPageArk(URL):
-        
-        opener = AppURLopener()
-                    
-        page = opener.open(URL)
-        soup = BeautifulSoup(page, "html.parser")
-
-        content = soup.find('div', attrs={'id': 'content'})
-        print(content)
-        content = content.text.strip()
-        content = content.replace('\n\n', '\n')
-        content = content[:2000] + (content[2000:] and '..')
-
-        return content
-
-def PrintPageD(URL):
-        
-        opener = AppURLopener()
-                    
-        page = opener.open(URL)
-        soup = BeautifulSoup(page, "html.parser")
-
-        title = soup.find('h1')
-        title = title.text.strip()
-
-        stitle = soup.find('h4')
-        stitle = stitle.text.strip()
-
-        table = soup.find('table', attrs={'class': 'statBlock'})
-        table = table.text.strip()
-        table = table.replace('\n\n\n', '\r')
-        table = table.replace('\n', ' ')
-
-        desc = soup.findAll('p')
-        descp = ''
-        for para in desc:
-                para = para.text.strip()
-                if para.__contains__("Hypertext"):
-                        break
-                descp += '\n' + para + '\n'
-        total = title + '\n' + stitle + '\n' + table + '\n' + descp
-        return total
-
-def PrintRoll(roll):
-    i = 0
-    prev_sep = "+"
-    current_num = ""
-    roll_result = 0
-    dice_num = 1
-    raw_roll = ""
-    if len(roll) != 0:
-        if roll[0] == 'd' or roll[0] == '+' or roll[0] == '-':
-            prev_sep = roll[0]
-            if prev_sep == "d":
-                prev_sep = "+d" 
-            i=1
-        elif not roll[0].isnumeric():
-            return ""
-    else:
-        return ""
-    if not roll[-1].isnumeric():
-        return ""
-    while i < len(roll):
-        if roll[i].isnumeric():
-            current_num += roll[i]
-        else:
-            if len(current_num) == 0 and (roll[i] != "d"  or "d" in prev_sep):
-                return ""
-    
-            if roll[i] == "d":
-                if "d" in prev_sep:
-                    return ""
-                if len(current_num) > 0:
-                    dice_num = int(current_num)
-                    current_num = ""
-                if dice_num == 0:
-                    return ""
-                prev_sep += "d"
-
-            elif roll[i] == "+" or roll[i] == "-":
-                if len(current_num) == 0:
-                    return ""
-                if "+d" == prev_sep:
-                    if (int(current_num) == 0):
-                        return ""
-                    k = 0
-                    while k < dice_num:
-                        val = random.randint(1,int(current_num))
-                        roll_result += val
-                        raw_roll += ("+"+str(val))
-                        k+=1
-                    current_num = ""
-                    dice_num = 1
-                elif "-d" == prev_sep:
-                    if (int(current_num) == 0):
-                        return ""
-                    k = 0
-                    while k < dice_num:
-                        val = random.randint(1,int(current_num))
-                        roll_result -= val
-                        raw_roll += ("-"+str(roll_result))
-                        k+=1
-                    current_num = ""
-                    dice_num = 1                    
-                elif "+" == prev_sep:
-                    roll_result += int(current_num)
-                    raw_roll += ("+"+current_num)
-                    current_num = ""
-                elif "-" == prev_sep:
-                    roll_result -= int(current_num)
-                    raw_roll += ("-"+current_num)
-                    current_num = ""
-                prev_sep = roll[i]
-            else:
-                return ""
-        i+=1
-    if "+d" == prev_sep:
-        k = 0
-        while k < dice_num:
-            val = random.randint(1,int(current_num))
-            roll_result += val
-            raw_roll += ("+"+str(val))
-            k+=1
-    elif "-d" == prev_sep:
-        k = 0
-        while k < dice_num:
-            val = random.randint(1,int(current_num))
-            roll_result -= val
-            raw_roll += ("-"+str(val))      
-            k+=1        
-    elif "+" == prev_sep:
-        roll_result += int(current_num)
-        raw_roll += ("+"+current_num)
-    elif "-" == prev_sep:
-        roll_result -= int(current_num)
-        raw_roll += ("-"+current_num)
-    if raw_roll[0] == "+":
-        raw_roll = raw_roll[1:]
-    if roll_result < 0:
-        roll_result = 0
-    return raw_roll+": "+str(roll_result)
-
-def PrintRolls(userin):
-    rolls = ""
-    cleaned_input = userin.replace(" ","").lower().split(",")
-    if len(cleaned_input) == 0:
-        return "Error: No Input Given"
-    i = 0
-    total = 0
-    while i < len(cleaned_input):
-        roll = PrintRoll(cleaned_input[i])
-        if len(roll) == 0:
-            return "Error: Roll Number " + str(i+1) + " Improperly Formatted"
-        rolls += roll + "\n"
-        total += int(roll.split(":")[1].replace(" ",""))
-        i += 1
-    return rolls, total
 
 # Take in int userID, string cell value (e.g. 'B1'), output CellValue string
 def FindCellValue(userID, cell):
