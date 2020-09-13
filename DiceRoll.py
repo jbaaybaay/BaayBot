@@ -1,5 +1,14 @@
 import random
 
+def GurpsRoll(difficulty):
+    d61 = random.randint(1,6)
+    d62 = random.randint(1,6)
+    d63 = random.randint(1,6)
+    total = d61+d62+d63
+    if total <= difficulty:
+        return " success by **"+str(difficulty-total)+"**("+str(d61)+","+str(d62)+","+str(d63)+")."
+    else:
+        return " failure by **"+str(total-difficulty)+"**("+str(d61)+","+str(d62)+","+str(d63)+")."
 def PrintRoll(roll):
     i = 0
     prev_sep = "+"
