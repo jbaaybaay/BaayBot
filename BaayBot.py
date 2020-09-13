@@ -233,19 +233,13 @@ async def gurps(ctx, *args):
         username = ctx.message.author.mention
         if not args[0].isnumeric():
             await ctx.send("Error: Incorrect Input Format")
-        roll = random.randint(1,6)+random.randint(1,6)+random.randint(1,6)
-        success_fail = int(args[0]) - roll
-        if success_fail < 0:
-            user_rolls = username+" failure by **"+str(abs(success_fail))+"**("+args[0]+"-"+str(roll)+")."
-        else:
-            user_rolls = username+" success by **"+str(success_fail)+"**("+args[0]+"-"+str(roll)+")."
-        await ctx.send(user_rolls)
+        await ctx.send(username+GurpsRoll(int(args[0])))
 
 @bot.command(pass_context=True)
 async def roll(ctx, *args):
         username = ctx.message.author.mention
         rolls, total = PrintRolls("".join(args))
-        user_rolls = rolls+username+" rolled: **"+str(total)+"**."
+        user_rolls = "```"+rolls+"```"+username+" rolled: **"+str(total)+"**."
         await ctx.send(user_rolls)
 
 @bot.command(pass_context=True)
@@ -255,7 +249,7 @@ async def spot(ctx):
             await ctx.send(SpotMod)
             return
         rolls, total = PrintRolls("1d20+"+SpotMod)
-        user_rolls = rolls+ctx.message.author.mention+" rolled: **"+str(total)+"** on **Spot**."
+        user_rolls = "```"+rolls+"```"+ctx.message.author.mention+" rolled: **"+str(total)+"** on **Spot**."
         await ctx.send(user_rolls)
 
 @bot.command(pass_context=True)
@@ -265,7 +259,7 @@ async def listen(ctx):
             await ctx.send(ListenMod)
             return
         rolls, total = PrintRolls("1d20+"+ListenMod)
-        user_rolls = rolls+ctx.message.author.mention+" rolled: **"+str(total)+"** on **Listen**."
+        user_rolls = "```"+rolls+"```"+ctx.message.author.mention+" rolled: **"+str(total)+"** on **Listen**."
         await ctx.send(user_rolls)
 
 @bot.command(pass_context=True)
@@ -275,7 +269,7 @@ async def init(ctx):
             await ctx.send(InitMod)
             return
         rolls, total = PrintRolls("1d20+"+InitMod)
-        user_rolls = rolls+ctx.message.author.mention+" rolled: **"+str(total)+"** on **Initiative**."
+        user_rolls = "```"+rolls+"```"+ctx.message.author.mention+" rolled: **"+str(total)+"** on **Initiative**."
         await ctx.send(user_rolls)
 
 bot.run(Discord_Token)
