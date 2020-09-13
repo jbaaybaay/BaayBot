@@ -229,6 +229,19 @@ async def search(ctx, *args):
             query = URLend + " dnd 3.5"
 
 @bot.command(pass_context=True)
+async def gurps(ctx, *args):
+        username = ctx.message.author.mention
+        if not args[0].isnumeric():
+            await ctx.send("Error: Incorrect Input Format")
+        roll = random.randint(1,6)+random.randint(1,6)+random.randint(1,6)
+        success_fail = int(args[0]) - roll
+        if success_fail < 0:
+            user_rolls = username+" failure by **"+str(abs(success_fail))+"**("+args[0]+"-"+str(roll)+")."
+        else:
+            user_rolles = username+" success by **"+str(success_fail)+"**("+args[0]+"-"+str(roll)+")."
+        await ctx.send(user_rolls)
+
+@bot.command(pass_context=True)
 async def roll(ctx, *args):
         username = ctx.message.author.mention
         rolls, total = PrintRolls("".join(args))
