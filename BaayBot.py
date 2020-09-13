@@ -238,7 +238,7 @@ async def gurps(ctx, *args):
         if success_fail < 0:
             user_rolls = username+" failure by **"+str(abs(success_fail))+"**("+args[0]+"-"+str(roll)+")."
         else:
-            user_rolles = username+" success by **"+str(success_fail)+"**("+args[0]+"-"+str(roll)+")."
+            user_rolls = username+" success by **"+str(success_fail)+"**("+args[0]+"-"+str(roll)+")."
         await ctx.send(user_rolls)
 
 @bot.command(pass_context=True)
