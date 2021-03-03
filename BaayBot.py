@@ -90,33 +90,44 @@ async def roll(ctx, *args):
         await ctx.send(user_rolls)
 
 @bot.command(pass_context=True)
-async def spot(ctx):
-        SpotMod = FindCellValue(ctx.message.author.id, "C78")
-        if SpotMod == "Error: User Sheet Not Initialized Correctly":
-            await ctx.send(SpotMod)
+async def me(ctx, *args):
+        with open('Characters/UserNameToCharacterName.json','r') as jsonFile:
+            usernames = jsonFile.read().replace('\n','')
+        usernameDict = json.loads(usernames)
+        if not ctx.message.author.name in usernameDict.keys():
+            await ctx.send(ctx.message.author.mention+" No character found for your username")
             return
-        rolls, total = PrintRolls("1d20+"+SpotMod)
-        user_rolls = "```"+rolls+"```"+ctx.message.author.mention+" rolled: **"+str(total)+"** on **Spot**."
-        await ctx.send(user_rolls)
-
-@bot.command(pass_context=True)
-async def listen(ctx):
-        ListenMod = FindCellValue(ctx.message.author.id, "C68")
-        if ListenMod == "Error: User Sheet Not Initialized Correctly":
-            await ctx.send(ListenMod)
+        cleanArgs = "".join(args).replace(" ","").lower()
+        if not cleanArgs:
+            await ctx.send(ctx.message.author.mention+" "+usernameDict[ctx.message.author.name])
             return
-        rolls, total = PrintRolls("1d20+"+ListenMod)
-        user_rolls = "```"+rolls+"```"+ctx.message.author.mention+" rolled: **"+str(total)+"** on **Listen**."
-        await ctx.send(user_rolls)
-
-@bot.command(pass_context=True)
-async def init(ctx):
-        InitMod = FindCellValue(ctx.message.author.id, "C25")
-        if InitMod == "Error: User Sheet Not Initialized Correctly":
-            await ctx.send(InitMod)
+        if '+' in cleanArgs:
+            valPlusMod = cleanArgs.split('+')
+            value = valPlusMod[0]
+            modifier = "d20+"+valPlusMod[1]
+        elif '-' in cleanArgs:
+            valPlusMod = cleanArgs.split('-')
+            value = valPlusMod[0]
+            modifier = "d20-"+valPlusMod[1]
+        else:
+            value = cleanArgs
+            modifier = "d20"
+        characterFile = usernameDict[ctx.message.author.name]+".json"
+        with open('Characters/'+characterFile,'r') as characterJsonFile:
+            characterValues = characterJsonFile.read().replace('\n','')
+        characterDict = json.loads(characterValues)
+        if not value in characterDict.keys():
+            await ctx.send(ctx.message.author.mention+" Value "+value+" does not appear in "+characterFile)
             return
-        rolls, total = PrintRolls("1d20+"+InitMod)
-        user_rolls = "```"+rolls+"```"+ctx.message.author.mention+" rolled: **"+str(total)+"** on **Initiative**."
+        valueString = characterDict[value]
+        if valueString[0] == '-':
+            modifier += valueString
+        elif valueString[0] == '+':
+            modifier += valueString
+        else:
+            modifier += ('+'+valueString)
+        rolls, total = PrintRolls(modifier)
+        user_rolls = "```"+rolls+"```"+ctx.message.author.mention+" rolled: **"+str(total)+"**."
         await ctx.send(user_rolls)
 
 bot.run(Discord_Token)
