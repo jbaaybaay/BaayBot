@@ -1,3 +1,4 @@
 *.txt
 Tokens/
+Characters/
 __pycache__/
