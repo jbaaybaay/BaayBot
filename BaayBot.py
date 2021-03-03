@@ -13,7 +13,7 @@ from WebParser import *
 
 ###########################INITIALIZATION VARIABLES###########################
 # Initialize Google Sheets Service Account
-gc = gspread.service_account(filename='Tokens/GoogleService.json')
+#gc = gspread.service_account(filename='Tokens/GoogleService.json')
 
 # Designate Command Prefix
 bot = commands.Bot(command_prefix='$')
@@ -23,8 +23,8 @@ Discord_TokenFile = open('Tokens/DiscordToken.txt', 'r')
 Discord_Token = Discord_TokenFile.read()
 
 # Userdata Sheet ID
-UserDataSheetLinkFile = open('Tokens/UserdataSheet.txt', 'r')
-UserDataSheetLink = UserDataSheetLinkFile.read()
+#UserDataSheetLinkFile = open('Tokens/UserdataSheet.txt', 'r')
+#UserDataSheetLink = UserDataSheetLinkFile.read()
 #############################################################################
 
 ID_list, Username_list, Sheet_list = [], [], []
@@ -32,41 +32,41 @@ ActiveUsers = []
 # Keeps track of who's here for party rolls
 
 # Take in int userID, string cell value (e.g. 'B1'), output CellValue string
-def FindCellValue(userID, cell):
-        global ID_list, Sheet_list
-        CallerID = str(userID)
+#def FindCellValue(userID, cell):
+#        global ID_list, Sheet_list
+#        CallerID = str(userID)#
 
-        item = 0
-        for i in ID_list:
-                if i == CallerID:
-                        SheetLink = Sheet_list[item]
-                        break
-                else:
-                    item += 1
-        try:
-                CharacterSheet = gc.open_by_url(SheetLink)
-                CharacterWorksheet = CharacterSheet.get_worksheet(0)
-        except:
-                return ("Error: User Sheet Not Initialized Correctly")
+#        item = 0
+#        for i in ID_list:
+#                if i == CallerID:
+#                        SheetLink = Sheet_list[item]
+#                        break
+#                else:
+#                    item += 1
+#        try:
+#                CharacterSheet = gc.open_by_url(SheetLink)
+#                CharacterWorksheet = CharacterSheet.get_worksheet(0)
+#        except:
+#                return ("Error: User Sheet Not Initialized Correctly")#
 
-        CellValue = CharacterWorksheet.get(cell).first()
-        return CellValue
+#        CellValue = CharacterWorksheet.get(cell).first()
+#        return CellValue#
 
-def RefreshUserData():
-        global ID_list, Username_list, Sheet_list
-        
-        UserDataSheet = gc.open_by_key(UserDataSheetLink)
-        UserDataWorksheet = UserDataSheet.worksheet("UserData")
+#def RefreshUserData():
+#        global ID_list, Username_list, Sheet_list
+#        
+#        UserDataSheet = gc.open_by_key(UserDataSheetLink)
+#        UserDataWorksheet = UserDataSheet.worksheet("UserData")#
 
-        ID_list = UserDataWorksheet.col_values(1)
-        Username_list = UserDataWorksheet.col_values(2)
-        Sheet_list = UserDataWorksheet.col_values(3)
-        return
+#        ID_list = UserDataWorksheet.col_values(1)
+#        Username_list = UserDataWorksheet.col_values(2)
+#        Sheet_list = UserDataWorksheet.col_values(3)
+#        return
     
 
 @bot.event
 async def on_ready():
-        RefreshUserData()
+        #RefreshUserData()
         print("Baaybot Active")
 
 @bot.command(pass_context=True)
@@ -116,51 +116,51 @@ async def rollcall(ctx):
         await ctx.send(rollcall)
 
 
-@bot.command(pass_context=True)
-async def mysheet(ctx, *args):
-    try:
-            CharacterSheet = gc.open_by_url(args[0])
-            CharacterWorksheet = CharacterSheet.get_worksheet(0)
-            ValCheck = CharacterWorksheet.cell(1, 1).value
-            if ValCheck != "Name":
-                await ctx.send("Incorrect Sheet: Please make sure your character sheet is the first worksheet")
-                return
-            
-            UserDataSheet = gc.open_by_key(UserDataSheetLink)
-            UserDataWorksheet = UserDataSheet.worksheet("UserData")
+#@bot.command(pass_context=True)
+#async def mysheet(ctx, *args):
+#    try:
+#            CharacterSheet = gc.open_by_url(args[0])
+#            CharacterWorksheet = CharacterSheet.get_worksheet(0)
+#            ValCheck = CharacterWorksheet.cell(1, 1).value
+#            if ValCheck != "Name":
+#                await ctx.send("Incorrect Sheet: Please make sure your character sheet is the first worksheet")
+#                return
+#            
+#            UserDataSheet = gc.open_by_key(UserDataSheetLink)
+#            UserDataWorksheet = UserDataSheet.worksheet("UserData")#
 
-            ID_list = UserDataWorksheet.col_values(1)
-            CallerID = str(ctx.message.author.id)
-            row = 1
-            for i in ID_list:
-                if i == CallerID:
-                    # Update Row with new sheet
-                    UsernameCell = 'B'+str(row)
-                    UserDataWorksheet.update(UsernameCell, ctx.message.author.name)
-                    SheetlinkCell = 'C'+str(row)
-                    UserDataWorksheet.update(SheetlinkCell, args[0])
-                    RefreshUserData()
-                    await ctx.send("Sheet Row Updated")
-                    return
-                else:
-                    row += 1
+#            ID_list = UserDataWorksheet.col_values(1)
+#            CallerID = str(ctx.message.author.id)
+#            row = 1
+#            for i in ID_list:
+#                if i == CallerID:
+#                    # Update Row with new sheet
+#                    UsernameCell = 'B'+str(row)
+#                    UserDataWorksheet.update(UsernameCell, ctx.message.author.name)
+#                    SheetlinkCell = 'C'+str(row)
+#                    UserDataWorksheet.update(SheetlinkCell, args[0])
+#                    RefreshUserData()
+#                    await ctx.send("Sheet Row Updated")
+#                    return
+#                else:
+#                    row += 1#
 
-            # Create New Row
-            IDCell = 'A'+str(row)
-            UserDataWorksheet.update(IDCell, str(ctx.message.author.id))
-            UsernameCell = 'B'+str(row)
-            UserDataWorksheet.update(UsernameCell, ctx.message.author.name)
-            SheetlinkCell = 'C'+str(row)
-            UserDataWorksheet.update(SheetlinkCell, args[0])
-            RefreshUserData()
-            await ctx.send("New Row Created")
-            return
+#            # Create New Row
+#            IDCell = 'A'+str(row)
+#            UserDataWorksheet.update(IDCell, str(ctx.message.author.id))
+#            UsernameCell = 'B'+str(row)
+#            UserDataWorksheet.update(UsernameCell, ctx.message.author.name)
+#            SheetlinkCell = 'C'+str(row)
+#            UserDataWorksheet.update(SheetlinkCell, args[0])
+#            RefreshUserData()
+#            await ctx.send("New Row Created")
+#            return#
 
-            await ctx.send(row)
+#            await ctx.send(row)#
 
-    except:
-            await ctx.send("Error: Permission or URL Error")
-            return
+#    except:
+#            await ctx.send("Error: Permission or URL Error")
+#            return
 
 @bot.command(pass_context=True)
 async def rip(ctx):
