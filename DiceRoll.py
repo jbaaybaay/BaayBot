@@ -1,5 +1,7 @@
 import random
-
+from operator import itemgetter
+# This is hideous, horribly written code, sorry
+# Maybe I'll rewrite it one day, but not today
 def GurpsRoll(difficulty):
     d61 = random.randint(1,6)
     d62 = random.randint(1,6)
@@ -115,11 +117,17 @@ def PrintRolls(userin):
         return "Error: No Input Given"
     i = 0
     total = 0
+    rollArr = []
     while i < len(cleaned_input):
         roll = PrintRoll(cleaned_input[i])
         if len(roll) == 0:
             return "Error: Roll Number " + str(i+1) + " Improperly Formatted"
-        rolls += roll + "\n"
+        indRoll = [int(roll.split(":")[1].replace(" ","")),roll]
+        rollArr.append(indRoll)
+        #rolls += roll + "\n"
         total += int(roll.split(":")[1].replace(" ",""))
         i += 1
+    sortedRollArr = sorted(rollArr,key=itemgetter(0))
+    for item in sortedRollArr:
+        rolls += item[1] + "\n"
     return rolls, total
