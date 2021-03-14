@@ -83,6 +83,13 @@ async def gurps(ctx, *args):
         await ctx.send(username+GurpsRoll(int(args[0])))
 
 @bot.command(pass_context=True)
+async def uroll(ctx, *args):
+        username = ctx.message.author.mention
+        rolls, total = PrintRollsUnsorted("".join(args))
+        user_rolls = "```"+rolls+"```"+username+" rolled: **"+str(total)+"**."
+        await ctx.send(user_rolls)
+
+@bot.command(pass_context=True)
 async def roll(ctx, *args):
         username = ctx.message.author.mention
         rolls, total = PrintRolls("".join(args))

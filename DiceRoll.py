@@ -110,6 +110,25 @@ def PrintRoll(roll):
         roll_result = 0
     return raw_roll+": "+str(roll_result)
 
+def PrintRollsUnsorted(userin):
+    rolls = ""
+    cleaned_input = userin.replace(" ","").lower().split(",")
+    if len(cleaned_input) == 0:
+        return "Error: No Input Given"
+    i = 0
+    total = 0
+    rollArr = []
+    while i < len(cleaned_input):
+        roll = PrintRoll(cleaned_input[i])
+        if len(roll) == 0:
+            return "Error: Roll Number " + str(i+1) + " Improperly Formatted"
+        indRoll = [int(roll.split(":")[1].replace(" ","")),roll]
+        rollArr.append(indRoll)
+        rolls += roll + "\n"
+        total += int(roll.split(":")[1].replace(" ",""))
+        i += 1
+    return rolls, total
+
 def PrintRolls(userin):
     rolls = ""
     cleaned_input = userin.replace(" ","").lower().split(",")
